@@ -1,0 +1,154 @@
+managed implementation in class zbp_kk_travel_root unique;
+
+strict ( 2 );
+//add draft feature at BO level
+with draft;
+//define the behavior for root entity
+define behavior for ZKK_TRAVEL_ROOT alias Travel
+implementation in class zbp_kk_travel_root unique
+//telling the framework to insert data in this db table for travel request
+persistent table /dmo/travel_m
+//how the RAP should handle the locks - if a travel request is locked
+//the other users cannot edit the childs - like its bookings and suppl
+lock master
+total etag LastChangedAt
+//controls the permissions and security settings for our RAP BO
+authorization master ( instance )
+
+//specify the draft table -will create by rap
+draft table zkk_draft_table
+
+//controlling the concurrency
+etag master LastChangedAt
+early numbering
+with additional save
+{
+  //here are the operations which RAP with generate automatically (manage)
+  create ( precheck );
+  update ( precheck);
+  delete;
+//a booking can only be created with travel request
+
+//dynamic featiure control
+ association _Booking { create(features:instance); with draft; }
+//it is a piece of code which is intented to be only consumed withi our RAP BO -reusbale prpose
+ internal action reCalcTotalPrice;
+ //booking fee and currency code changes
+ determination calculateTotalPrice on modify {
+           create; field BookingFee,CurrencyCode; }
+//event definition whenever the booking is created in RAP
+event booking_created parameter ZKK_ABS_TRAVEL;
+//Checking custom business object rules
+validation validHeaderData on save { create;field CustomerId,BeginDate,EndDate;}
+  field ( readonly ) TravelId,CreatedBy,CreatedAt,LastChangedAt,LastChangedBy;
+  field (mandatory) AgencyId,CustomerId,BeginDate,BookingFee,EndDate,OverallStatus,TotalPrice;
+  factory action copyTravel[1];
+//non factory action which will change state of BO instance
+action (features : instance)acceptTravel result[1] $self;
+action (features : instance)rejectTravel result[1] $self;
+
+//create new determination action
+determine action validationCustomer { validation validHeaderData;}
+//adding side effects which inform RAP to reload Total price if booking fee changes in frontend
+side effects {
+               field BookingFee affects field TotalPrice;
+               determine action validationCustomer executed on field CustomerId affects messages;
+                }
+//adding draft actions
+draft determine action Prepare;
+draft action Edit;
+draft action Resume;
+draft action Activate;
+draft action Discard;
+
+
+
+  mapping for /dmo/travel_m{
+    TravelId = travel_id;
+    AgencyId = agency_id;
+    CustomerId = customer_id;
+    BeginDate = begin_date;
+    EndDate = end_date;
+    TotalPrice = total_price;
+    BookingFee = booking_fee;
+    CurrencyCode = currency_code;
+    Description = description;
+    OverallStatus = overall_status;
+    CreatedBy = created_by;
+    LastChangedBy = last_changed_by;
+    CreatedAt = created_at;
+    LastChangedAt = last_changed_at;
+  }
+}
+
+//define the behavior for child entity
+define behavior for ZKK_BOOKING_ROOT alias Booking
+implementation in class zbp_kk_booking_root unique
+//telling the framework to insert data in this db table for booking
+persistent table /dmo/booking_m
+//draft table for booking
+lock dependent by _Travel
+authorization dependent by _Travel
+draft table zkk_draft_book
+etag master LastChangedAt
+early numbering
+//for booking data event raise
+with additional save
+{
+  update;
+  delete;
+  field ( readonly ) TravelId;
+//reconfirm that booking will create with travel draft
+  association _Travel { with draft; }
+  association _BookingSupplement { create; with draft; }
+
+determination calculateTotalPrice on modify
+   { field FlightPrice,CurrencyCode; }
+
+//side effect
+side effects{
+        field FlightPrice affects field _travel.TotalPrice; }
+
+  mapping for /dmo/booking_m{
+    TravelId = travel_id;
+    BookingId = booking_id;
+    BookingDate = booking_date;
+    CustomerId = customer_id;
+    CarrierId = carrier_id;
+    ConnectionId = connection_id;
+    FlightDate = flight_date;
+    FlightPrice = flight_price;
+    CurrencyCode = currency_code;
+    BookingStatus = booking_status;
+    LastChangedAt = last_changed_at;
+  }
+}
+
+//define the behavior for child entity
+define behavior for ZKK_BOOK_SUPPL alias BookSuppl
+implementation in class zbp_kk_book_suppl_root unique
+//telling the framework to insert data in this db table for booking suppl
+persistent table /dmo/booksuppl_m
+//draft table zkk_draft_suppl
+lock dependent by _Travel
+authorization dependent by _Travel
+draft table zkk_draft_suppl
+etag master LastChangedAt
+early numbering
+{
+  update;
+  delete;
+  field ( readonly ) BookingId, TravelId;
+  association _Travel { with draft;}
+  association _Booking { with draft;}
+
+  mapping for /dmo/booksuppl_m{
+   TravelId = travel_id;
+    BookingId = booking_id;
+    BookingSupplementId = booking_supplement_id;
+    SupplementId = supplement_id;
+    Price = price;
+    CurrencyCode = currency_code;
+    LastChangedAt = last_changed_at;
+  }
+}

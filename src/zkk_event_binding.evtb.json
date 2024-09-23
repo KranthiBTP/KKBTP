@@ -1,0 +1,21 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Booking create Event",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "producerNamespace": "com.kk",
+  "producer": "PD5A267BC20D0B330DB88CD53B0016CE7",
+  "producerVersion": "0001",
+  "boName": "Travel",
+  "boOperation": "create",
+  "producerType": "com.kk.Travel.create.v*",
+  "events": [
+    {
+      "eventVersion": "0001",
+      "entityName": "ZKK_TRAVEL_ROOT",
+      "entityEventName": "BOOKING_CREATED"
+    }
+  ]
+}

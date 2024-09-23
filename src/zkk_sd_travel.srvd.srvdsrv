@@ -1,0 +1,12 @@
+@EndUserText.label: 'Service defintion'
+define service ZKK_SD_TRAVEL {
+  expose ZKK_TRAVEL_PROJ_PROCESSOR  as Travel;
+  expose ZKK_BOOKING_PROJ_PROCESSOR as Booking;
+  expose ZKK_BOOKSUPPL_PROJ         as BookSupplement;
+  expose /DMO/I_Agency              as Agency;
+  expose /DMO/I_Customer            as Customer;
+  expose /DMO/I_Carrier             as Carrier;
+  expose /DMO/I_Connection          as Connection;
+  expose /DMO/I_Overall_Status_VH   as OverallStatus;
+  expose /DMO/I_Booking_Status_VH   as BookingStatus;
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: 'Analaytical output'
+define service ZKK_SD_ANALAYTICAL {
+  expose ZC_KK_SALES_ANA as Salesset;
+}
